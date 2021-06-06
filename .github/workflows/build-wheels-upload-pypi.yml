@@ -6,8 +6,6 @@ name: build-wheels-upload-pypi
 on:
   push:
     # Run this action on the trigger event when *any* tag is pushed
-    tags:
-       - '*'
     paths:
       - '.github/workflows/build-wheels-upload-pypi.yml'
       
