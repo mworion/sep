@@ -62,16 +62,27 @@ jobs:
     # done with the help of the `cibuildwheel` package.
     #
     # The wheels are built for Windows, Linux and MacOS and the python versions
-    # 3.5 - 3.9.
+    # 3.6 - 3.9.
     #
     # The three operating system could be done in parallel.
-
+    name: Build ${{ matrix.build }} wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 3
       matrix:
-        python-version: [3.9]
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: ubuntu-18.04
+            build: "*x86_64* *i686*"
+          - os: ubuntu-18.04
+            build: "*aarch64*"
+          - os: ubuntu-18.04
+            build: "*ppc64le*"
+          - os: windows-2019
+            build: "*win_amd64*"
+          - os: windows-2019
+            build: "*win32*"
+          - os: macos-10.15
+            build: "*x86_64* *arm64*"
 
     steps:
       - name: checkout
@@ -80,19 +91,23 @@ jobs:
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.9'
 
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==1.7.4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1.2.0
+        if: runner.os == 'Linux'
 
       - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
+        uses: pypa/cibuildwheel@v2.0.0a2
         env:
-          CIBW_BUILD: "cp3*"
-          # CIBW_SKIP: "cp35-* cp36-*"
+          CIBW_TEST_REQUIRES: "pytest"
+          CIBW_TEST_COMMAND: "pytest --pyargs pybase64"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
-          CIBW_BUILD_VERBOSITY: 1
+          CIBW_ARCHS_LINUX: "x86_64 i686 aarch64 ppc64le"
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_BUILD: "${{ matrix.build }}"
+          CIBW_PRERELEASE_PYTHONS: "${{ !startsWith(github.ref, 'refs/tags/v') }}"
 
       - name: Show files
         run: ls -lh wheelhouse
@@ -116,8 +131,9 @@ jobs:
     needs: [build_wheels, build_sdist]
 
     # upload to PyPI on every tag starting with 'v'
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
 
+    if: 1==0
     steps:
     - uses: actions/setup-python@v2
 
