@@ -8,7 +8,8 @@ on:
     # Run this action on the trigger event when *any* tag is pushed
     tags:
        - '*'
-
+    paths:
+      - '.github/workflows/build-wheels-upload-pypi.yml'
 jobs:
 
   # This action is split into three jobs:
